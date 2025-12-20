@@ -4,7 +4,8 @@ const cors = require('cors');
 const morgan = require('morgan');
 const config = require('./config');
 const logger = require('./common/utils/logger');
-const routes = require('./api/routes');
+const authRoutes = require('./routes/auth.routes')
+
 
 const app = express();
 
@@ -18,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('combined', { stream: { write: (msg) => logger.info(msg.trim()) } }));
 
 // Routes
-app.use('/api/v1', routes);
+app.use('/api/v1/auth', authRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
