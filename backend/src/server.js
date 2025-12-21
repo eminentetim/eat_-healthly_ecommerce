@@ -3,6 +3,9 @@ const config = require('./config');
 const logger = require('./common/utils/logger');
 const connectDB = require('./infrastructure/database/mongodb/connection');
 const { connectRedis } = require('./infrastructure/cache/redis.client');
+const { PORT, NODE_ENV } = require('./config');
+
+require("dotenv").config();
 
 const startServer = async () => {
   try {
@@ -13,6 +16,10 @@ const startServer = async () => {
     // Start server
     const server = app.listen(config.port, () => {
       logger.info(`Server running in ${config.env} mode on port ${config.port}`);
+       logger.info(`📊 Health check: http://localhost:${PORT}/api/v1/health`);
+      if (NODE_ENV === 'development') {
+        logger.info(`📚 Swagger Docs: http://localhost:${PORT}/api-docs`);
+      }
     });
 
     // Handle unhandled rejections

@@ -1,0 +1,470 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Organic eCommerce Marketplace API",
+    "version": "1.0.0",
+    "description": "Official REST API for the Organic eCommerce Marketplace — A secure, role-based platform connecting customers with verified organic vendors. Features OTP-based registration, vendor approval workflow, wallet system, manual payment verification, and product-integrated blog.",
+    "contact": {
+      "name": "Organic Marketplace Support",
+      "email": "support@organicmarketplace.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://organicmarketplace.com/terms"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api/v1",
+      "description": "Local Development"
+    },
+    {
+      "url": "https://api.organicmarketplace.com/api/v1",
+      "description": "Production"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT access token returned from /auth/login or /auth/verify-otp"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "fail" },
+          "message": { "type": "string" }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "success" },
+          "data": { "type": "object" },
+          "message": { "type": "string", "nullable": true }
+        }
+      },
+      "Tokens": {
+        "type": "object",
+        "properties": {
+          "accessToken": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6..." },
+          "refreshToken": { "type": "string", "example": "a1b2c3d4e5f6..." }
+        }
+      },
+      "UserSafe": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string", "enum": ["customer", "vendor", "admin"] },
+          "full_name": { "type": "string", "nullable": true },
+          "phone_number": { "type": "string" },
+          "is_verified": { "type": "boolean" },
+          "isApproved": { "type": "boolean", "description": "Vendor only – admin approval status" },
+          "status": { "type": "string", "enum": ["pending", "approved", "rejected", "suspended"], "description": "Vendor only" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SignupCustomer": {
+        "type": "object",
+        "required": ["first_name", "last_name", "email", "password", "password_confirm", "phone_number"],
+        "properties": {
+          "first_name": { "type": "string", "minLength": 2 },
+          "last_name": { "type": "string", "minLength": 2 },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 8 },
+          "password_confirm": { "type": "string" },
+          "phone_number": { "type": "string", "minLength": 10 },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "gender": { "type": "string" },
+          "note": { "type": "string" },
+          "image_url": { "type": "string", "format": "uri" }
+        }
+      },
+      "SignupVendor": {
+        "type": "object",
+        "required": ["first_name", "last_name", "email", "password", "password_confirm", "phone_number", "address", "state", "city", "store_name"],
+        "properties": {
+          "first_name": { "type": "string", "minLength": 2 },
+          "last_name": { "type": "string", "minLength": 2 },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 8 },
+          "password_confirm": { "type": "string" },
+          "phone_number": { "type": "string", "minLength": 10 },
+          "address": { "type": "string" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "city": { "type": "string" },
+          "store_name": { "type": "string", "minLength": 3 },
+          "store_image": { "type": "string", "format": "uri" },
+          "business_type": { "type": "string", "enum": ["individual business", "registered business"] },
+          "description": { "type": "string" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" }
+        }
+      },
+      "OTPRequest": {
+        "type": "object",
+        "required": ["email", "code"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "code": { "type": "string", "pattern": "^\\d{6}$" }
+        }
+      },
+      "ProfileUpdate": {
+        "type": "object",
+        "properties": {
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "phone_number": { "type": "string" },
+          "gender": { "type": "string" },
+          "note": { "type": "string" },
+          "image_url": { "type": "string", "format": "uri" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "city": { "type": "string" },
+          "address": { "type": "string" },
+          "store_name": { "type": "string" },
+          "store_image": { "type": "string", "format": "uri" },
+          "business_type": { "type": "string", "enum": ["individual business", "registered business"] },
+          "description": { "type": "string" },
+          "billing_address": { "type": "array", "items": { "type": "object" } },
+          "notifications": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "enum": ["email", "push"] },
+                "is_enabled": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/auth/customer/signup": {
+      "post": {
+        "summary": "Register as Customer",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SignupCustomer" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Customer registered. OTP sent for verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/UserSafe" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/schemas/ErrorResponse" }
+        }
+      }
+    },
+    "/auth/vendor/signup": {
+      "post": {
+        "summary": "Register as Vendor (requires admin approval after verification)",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SignupVendor" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vendor registered. OTP sent. Account pending admin approval.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/UserSafe" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/schemas/ErrorResponse" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login (Customer / Vendor / Admin)",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/UserSafe" },
+                    "accessToken": { "type": "string" },
+                    "refreshToken": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/schemas/ErrorResponse" },
+          "403": { "$ref": "#/components/schemas/ErrorResponse" }
+        }
+      }
+    },
+    "/auth/verify-otp": {
+      "post": {
+        "summary": "Verify OTP (completes registration or password reset)",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OTPRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/UserSafe" },
+                    "accessToken": { "type": "string" },
+                    "refreshToken": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/schemas/ErrorResponse" }
+        }
+      }
+    },
+    "/auth/resend-otp": {
+      "post": {
+        "summary": "Resend verification OTP",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": { "email": { "type": "string", "format": "email" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OTP resent successfully" },
+          "400": { "$ref": "#/components/schemas/ErrorResponse" }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "summary": "Request password reset OTP",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": { "email": { "type": "string", "format": "email" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Reset OTP sent to email" },
+          "404": { "$ref": "#/components/schemas/ErrorResponse" }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "patch": {
+        "summary": "Reset password using OTP",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "code", "password", "password_confirm"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "code": { "type": "string", "pattern": "^\\d{6}$" },
+                  "password": { "type": "string", "minLength": 8 },
+                  "password_confirm": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password reset successfully" },
+          "400": { "$ref": "#/components/schemas/ErrorResponse" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Refresh access token",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refreshToken"],
+                "properties": { "refreshToken": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New tokens issued",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Tokens" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/schemas/ErrorResponse" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Logout (invalidate refresh token)",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refreshToken"],
+                "properties": { "refreshToken": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Logged out successfully" }
+        }
+      }
+    },
+    "/auth/profile": {
+      "patch": {
+        "summary": "Update authenticated user profile",
+        "tags": ["Auth"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProfileUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/UserSafe" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/schemas/ErrorResponse" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "OK" },
+                    "timestamp": { "type": "string", "format": "date-time" },
+                    "environment": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    { "name": "Auth", "description": "Authentication & user profile management" },
+    { "name": "System", "description": "Health & monitoring endpoints" }
+  ]
+}

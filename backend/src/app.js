@@ -5,6 +5,8 @@ const morgan = require('morgan');
 const config = require('./config');
 const logger = require('./common/utils/logger');
 const authRoutes = require('./routes/auth.routes')
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger.spec.json');
 
 
 const app = express();
@@ -25,6 +27,14 @@ app.use('/api/v1/auth', authRoutes);
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  swaggerOptions: {
+    docExpansion: 'none',
+    persistAuthorization: true
+  }
+}));
+
 
 // 404 handler
 app.use((req, res) => {
