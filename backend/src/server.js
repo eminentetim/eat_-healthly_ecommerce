@@ -1,36 +1,124 @@
+// src/server.js
+const http = require('http');
 const app = require('./app');
-const config = require('./config');
-const logger = require('./common/utils/logger');
-const connectDB = require('./infrastructure/database/mongodb/connection');
-const { connectRedis } = require('./infrastructure/cache/redis.client');
-const { PORT, NODE_ENV } = require('./config');
+const logger = require('./utils/logger');
 
-require("dotenv").config();
+const { connectDB } = require('./config/database');
+const { connectRedis, closeRedis } = require('./config/redis');
+const { startQueueProcessor } = require('./jobs/processor');
+const { PORT, NODE_ENV } = require('./config/constants');
+const authService = require('./services/authService');
 
+
+require('dotenv').config();
+
+// === Initialize Event Listeners ===
+// These must be required AFTER DB & Redis connections are established
+// and BEFORE the server starts listening
+const initializeListeners = () => {
+  require('./listeners/emailListener');
+  require('./listeners/notificationListener');
+  require('./listeners/orderStatusListener');
+  require('./listeners/walletListener');
+
+  logger.info('All event listeners initialized');
+};
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Graceful shutdown handler
+const gracefulShutdown = async (signal) => {
+  logger.info(`Received ${signal}. Initiating graceful shutdown...`);
+
+  server.close(async () => {
+    try {
+      await connectDB.close();
+      logger.info('MongoDB connection closed.');
+
+    //   await closeRedis();
+    //   logger.info('Redis connection closed.');
+
+      logger.info('Background job workers stopping...');
+      logger.info('Server shut down gracefully.');
+      process.exit(0);
+    } catch (err) {
+      logger.error('Error during graceful shutdown', { error: err.message });
+      process.exit(1);
+    }
+  });
+
+  setTimeout(() => {
+    logger.error('Force shutdown triggered after timeout.');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', {
+    message: error.message,
+    stack: error.stack,
+  });
+  gracefulShutdown('uncaughtException');
+});
+
+process.on('unhandledRejection', (reason) => {
+  logger.error('Unhandled Rejection:', {
+    reason: reason instanceof Error ? reason.message : reason,
+  });
+  gracefulShutdown('unhandledRejection');
+});
+
+// Start the server
 const startServer = async () => {
   try {
-    // Connect to databases
+    // Connect to MongoDB
     await connectDB();
-    await connectRedis();
+    logger.info('MongoDB connected successfully');
 
-    // Start server
-    const server = app.listen(config.port, () => {
-      logger.info(`Server running in ${config.env} mode on port ${config.port}`);
-       logger.info(`📊 Health check: http://localhost:${PORT}/api/v1/health`);
-      if (NODE_ENV === 'development') {
-        logger.info(`📚 Swagger Docs: http://localhost:${PORT}/api-docs`);
+    // Connect to Redis
+    // await connectRedis();
+    // logger.info('Redis connected successfully');
+
+    // Start background job processors
+    startQueueProcessor();
+    logger.info('Background job processor started');
+
+    // Initialize default Admin
+    await authService.initializeAdmin();
+    logger.info('Default Admin account ensured');
+
+    // Initialize all event listeners
+    initializeListeners();
+
+    // Start HTTP server
+    server.listen(PORT, () => {
+      logger.info('Organic Marketplace Backend Running');
+      logger.info(`Port: ${PORT}`);
+      logger.info(`Environment: ${NODE_ENV}`);
+      logger.info(`Health Check: http://localhost:${PORT}/api/v1/health`);
+
+      if (NODE_ENV !== 'production') {
+        logger.info(`Swagger UI: http://localhost:${PORT}/api-docs`);
+        logger.info(`OpenAPI Spec: http://localhost:${PORT}/api-docs.json`);
       }
     });
-
-    // Handle unhandled rejections
-    process.on('unhandledRejection', (err) => {
-      logger.error('Unhandled Rejection:', err);
-      server.close(() => process.exit(1));
+  } catch (error) {
+    logger.error('Failed to start server:', {
+      message: error.message,
+      stack: error.stack,
     });
-  } catch (err) {
-    logger.error('Failed to start server:', err);
     process.exit(1);
   }
 };
 
+// Start the application
 startServer();
+
+
+
+
+

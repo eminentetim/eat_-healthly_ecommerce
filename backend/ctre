@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Base directory
+BASE_DIR="src"
+
+# Create directories
+mkdir -p \
+  $BASE_DIR/config \
+  $BASE_DIR/controllers \
+  $BASE_DIR/events \
+  $BASE_DIR/jobs \
+  $BASE_DIR/listeners \
+  $BASE_DIR/middleware \
+  $BASE_DIR/models \
+  $BASE_DIR/routes/v1 \
+  $BASE_DIR/services \
+  $BASE_DIR/utils \
+  $BASE_DIR/validators
+
+# Create config files
+touch \
+  $BASE_DIR/config/database.js \
+  $BASE_DIR/config/redis.js \
+  $BASE_DIR/config/resend.js \
+  $BASE_DIR/config/jwt.js \
+  $BASE_DIR/config/rateLimiter.js \
+  $BASE_DIR/config/constants.js \
+  $BASE_DIR/config/index.js
+
+# Create controller files
+touch \
+  $BASE_DIR/controllers/authController.js \
+  $BASE_DIR/controllers/adminController.js \
+  $BASE_DIR/controllers/vendorController.js \
+  $BASE_DIR/controllers/customerController.js \
+  $BASE_DIR/controllers/productController.js \
+  $BASE_DIR/controllers/orderController.js \
+  $BASE_DIR/controllers/cartController.js \
+  $BASE_DIR/controllers/wishlistController.js \
+  $BASE_DIR/controllers/walletController.js \
+  $BASE_DIR/controllers/withdrawalController.js \
+  $BASE_DIR/controllers/blogController.js \
+  $BASE_DIR/controllers/notificationController.js \
+  $BASE_DIR/controllers/uploadController.js
+
+# Create event files
+touch \
+  $BASE_DIR/events/eventEmitter.js \
+  $BASE_DIR/events/orderEvents.js \
+  $BASE_DIR/events/notificationEvents.js \
+  $BASE_DIR/events/walletEvents.js \
+  $BASE_DIR/events/userEvents.js
+
+# Create job files
+touch \
+  $BASE_DIR/jobs/queue.js \
+  $BASE_DIR/jobs/emailJob.js \
+  $BASE_DIR/jobs/notificationJob.js \
+  $BASE_DIR/jobs/processor.js
+
+# Create listener files
+touch \
+  $BASE_DIR/listeners/emailListener.js \
+  $BASE_DIR/listeners/notificationListener.js \
+  $BASE_DIR/listeners/orderStatusListener.js \
+  $BASE_DIR/listeners/walletListener.js
+
+# Create middleware files
+touch \
+  $BASE_DIR/middleware/auth.js \
+  $BASE_DIR/middleware/roleGuard.js \
+  $BASE_DIR/middleware/rateLimiter.js \
+  $BASE_DIR/middleware/validate.js \
+  $BASE_DIR/middleware/upload.js \
+  $BASE_DIR/middleware/idempotency.js \
+  $BASE_DIR/middleware/errorHandler.js
+
+# Create model files
+touch \
+  $BASE_DIR/models/User.js \
+  $BASE_DIR/models/Admin.js \
+  $BASE_DIR/models/Vendor.js \
+  $BASE_DIR/models/Customer.js \
+  $BASE_DIR/models/Product.js \
+  $BASE_DIR/models/Category.js \
+  $BASE_DIR/models/Order.js \
+  $BASE_DIR/models/OrderItem.js \
+  $BASE_DIR/models/Cart.js \
+  $BASE_DIR/models/Wishlist.js \
+  $BASE_DIR/models/Wallet.js \
+  $BASE_DIR/models/WalletTransaction.js \
+  $BASE_DIR/models/WithdrawalRequest.js \
+  $BASE_DIR/models/BlogPost.js \
+  $BASE_DIR/models/Notification.js \
+  $BASE_DIR/models/Otp.js \
+  $BASE_DIR/models/AuditLog.js
+
+# Create route files
+touch \
+  $BASE_DIR/routes/v1/authRoutes.js \
+  $BASE_DIR/routes/v1/adminRoutes.js \
+  $BASE_DIR/routes/v1/vendorRoutes.js \
+  $BASE_DIR/routes/v1/customerRoutes.js \
+  $BASE_DIR/routes/v1/productRoutes.js \
+  $BASE_DIR/routes/v1/orderRoutes.js \
+  $BASE_DIR/routes/v1/cartRoutes.js \
+  $BASE_DIR/routes/v1/wishlistRoutes.js \
+  $BASE_DIR/routes/v1/walletRoutes.js \
+  $BASE_DIR/routes/v1/withdrawalRoutes.js \
+  $BASE_DIR/routes/v1/blogRoutes.js \
+  $BASE_DIR/routes/v1/notificationRoutes.js \
+  $BASE_DIR/routes/v1/uploadRoutes.js \
+  $BASE_DIR/routes/index.js
+
+# Create service files
+touch \
+  $BASE_DIR/services/authService.js \
+  $BASE_DIR/services/otpService.js \
+  $BASE_DIR/services/emailService.js \
+  $BASE_DIR/services/notificationService.js \
+  $BASE_DIR/services/productService.js \
+  $BASE_DIR/services/orderService.js \
+  $BASE_DIR/services/walletService.js \
+  $BASE_DIR/services/withdrawalService.js \
+  $BASE_DIR/services/blogService.js \
+  $BASE_DIR/services/uploadService.js
+
+# Create util files
+touch \
+  $BASE_DIR/utils/apiResponse.js \
+  $BASE_DIR/utils/apiError.js \
+  $BASE_DIR/utils/logger.js \
+  $BASE_DIR/utils/generateOtp.js \
+  $BASE_DIR/utils/hashPassword.js \
+  $BASE_DIR/utils/jwtUtils.js \
+  $BASE_DIR/utils/idempotency.js \
+  $BASE_DIR/utils/validator.js
+
+# Create validator files
+touch \
+  $BASE_DIR/validators/authValidator.js \
+  $BASE_DIR/validators/productValidator.js \
+  $BASE_DIR/validators/orderValidator.js \
+  $BASE_DIR/validators/blogValidator.js \
+  $BASE_DIR/validators/walletValidator.js \
+  $BASE_DIR/validators/withdrawalValidator.js
+
+# Create app bootstrap files
+touch \
+  $BASE_DIR/app.js \
+  $BASE_DIR/server.js
+
+echo "✅ Project structure created successfully."
+
